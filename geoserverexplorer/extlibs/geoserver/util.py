@@ -1,12 +1,13 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
-
-# shapefile_and_friends = None
-# shapefile_plus_sidecars = shapefile_and_friends("test/data/states")
-
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
 
 def shapefile_and_friends(path):
-    return dict((ext, path + "." + ext) for ext in ['shx', 'shp', 'dbf', 'prj'])
+    return {ext: path + "." + ext for ext in ['shx', 'shp', 'dbf', 'prj']}

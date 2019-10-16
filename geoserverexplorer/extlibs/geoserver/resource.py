@@ -1,8 +1,17 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
+try:
+    from urllib.parse import urljoin
+except:
+    from urlparse import urljoin
 
 from geoserver.support import (ResourceInfo, xml_property, write_string, bbox, metadata, write_metadata,
                                write_bbox, string_list, write_string_list, attribute_list, write_bool, build_url)
@@ -73,7 +82,6 @@ class _ResourceBase(ResourceInfo):
 
     def __init__(self, catalog, workspace, store, name, href=None):
         super(_ResourceBase, self).__init__()
-
         if not href:
             assert isinstance(store, ResourceInfo)
             assert isinstance(name, basestring)
@@ -82,8 +90,7 @@ class _ResourceBase(ResourceInfo):
             parts = href.split('/')
             self._workspace_name = parts[parts.index('workspaces') + 1]
             self._store_name = parts[parts.index(self.url_part_stores) + 1]
-            name = parts[-1].replace('.xml', '')
-
+            name = parts[-1].replace('.xml','')
         self._href = href
         self.catalog = catalog
         self._workspace = workspace
@@ -115,7 +122,7 @@ class _ResourceBase(ResourceInfo):
                 self.name + ".xml"
             ]
         )
-        return self._href or url
+        return url or self._href
 
 
 class FeatureType(_ResourceBase):
@@ -138,22 +145,22 @@ class FeatureType(_ResourceBase):
     metadata_links = xml_property("metadataLinks", metadata_link_list)
     metadata = xml_property("metadata", metadata)
 
-    writers = dict(
-        name = write_string("name"),
-        nativeName = write_string("nativeName"),
-        title = write_string("title"),
-        abstract = write_string("abstract"),
-        enabled = write_bool("enabled"),
-        advertised = write_bool("advertised"),
-        nativeBoundingBox = write_bbox("nativeBoundingBox"),
-        latLonBoundingBox = write_bbox("latLonBoundingBox"),
-        srs = write_string("srs"),
-        nativeCRS = write_string("nativeCRS"),
-        projectionPolicy = write_string("projectionPolicy"),
-        keywords = write_string_list("keywords"),
-        metadataLinks = write_metadata_link_list("metadataLinks"),
-        metadata = write_metadata("metadata")
-    )
+    writers = {
+        'name': write_string("name"),
+        'nativeName': write_string("nativeName"),
+        'title': write_string("title"),
+        'abstract': write_string("abstract"),
+        'enabled': write_bool("enabled"),
+        'advertised': write_bool("advertised"),
+        'nativeBoundingBox': write_bbox("nativeBoundingBox"),
+        'latLonBoundingBox': write_bbox("latLonBoundingBox"),
+        'srs': write_string("srs"),
+        'nativeCRS': write_string("nativeCRS"),
+        'projectionPolicy': write_string("projectionPolicy"),
+        'keywords': write_string_list("keywords"),
+        'metadataLinks': write_metadata_link_list("metadataLinks"),
+        'metadata': write_metadata("metadata")
+    }
 
 
 class CoverageDimension(object):
@@ -171,25 +178,25 @@ def coverage_dimension(node):
     range_min = node.find("range/min")
     range_max = node.find("range/max")
     dimension_range = None
-    if None not in [min, max]:
+    if None not in [range_min, range_max]:  # instead of [min, max] ?!
         dimension_range = float(range_min.text), float(range_max.text)
     if None not in [name, description]:
         return CoverageDimension(name, description, dimension_range)
     else:
-        # should we bomb out more spectacularly here?
-        return None
+        return None  # should we bomb out more spectacularly here?
 
 
 def coverage_dimension_xml(builder, dimension):
+    # coverage dimension
     builder.start("coverageDimension", dict())
     builder.start("name", dict())
     builder.data(dimension.name)
     builder.end("name")
-
+    # description
     builder.start("description", dict())
     builder.data(dimension.description)
     builder.end("description")
-
+    # range
     if dimension.range is not None:
         builder.start("range", dict())
         builder.start("min", dict())
@@ -199,7 +206,6 @@ def coverage_dimension_xml(builder, dimension):
         builder.data(str(dimension.range[1]))
         builder.end("max")
         builder.end("range")
-
     builder.end("coverageDimension")
 
 
@@ -230,32 +236,31 @@ class Coverage(_ResourceBase):
     metadata = xml_property("metadata", metadata)
     interpolation_methods = xml_property("interpolationMethods", string_list)
 
-    writers = dict(
-        title = write_string("title"),
-        native_name = write_string("nativeName"),
-        native_format = write_string("nativeFormat"),
-        native_crs = write_string("nativeCRS"),
-        default_interpolation_method = write_string("defaultInterpolationMethod"),
-        description = write_string("description"),
-        abstract = write_string("abstract"),
-        enabled = write_bool("enabled"),
-        advertised = write_bool("advertised"),
-        nativeBoundingBox = write_bbox("nativeBoundingBox"),
-        latLonBoundingBox = write_bbox("latLonBoundingBox"),
-        srs = write_string("srs"),
-        projection_policy = write_string("projectionPolicy"),
-        keywords = write_string_list("keywords"),
-        metadataLinks = write_metadata_link_list("metadataLinks"),
-        requestSRS = write_string_list("requestSRS"),
-        responseSRS = write_string_list("responseSRS"),
-        supportedFormats = write_string_list("supportedFormats"),
-        interpolation_methods = write_string_list("interpolationMethods"),
-        metadata = write_metadata("metadata")
-    )
+    writers = {
+        'title': write_string("title"),
+        'native_name': write_string("nativeName"),
+        'native_format': write_string("nativeFormat"),
+        'native_crs': write_string("nativeCRS"),
+        'default_interpolation_method': write_string("defaultInterpolationMethod"),
+        'description': write_string("description"),
+        'abstract': write_string("abstract"),
+        'enabled': write_bool("enabled"),
+        'advertised': write_bool("advertised"),
+        'nativeBoundingBox': write_bbox("nativeBoundingBox"),
+        'latLonBoundingBox': write_bbox("latLonBoundingBox"),
+        'srs': write_string("srs"),
+        'projection_policy': write_string("projectionPolicy"),
+        'keywords': write_string_list("keywords"),
+        'metadataLinks': write_metadata_link_list("metadataLinks"),
+        'requestSRS': write_string_list("requestSRS"),
+        'responseSRS': write_string_list("responseSRS"),
+        'supportedFormats': write_string_list("supportedFormats"),
+        'interpolation_methods': write_string_list("interpolationMethods"),
+        'metadata': write_metadata("metadata")
+    }
 
 
 class WmsLayer(ResourceInfo):
-
     resource_type = "wmsLayer"
     save_method = "PUT"
 
@@ -268,37 +273,40 @@ class WmsLayer(ResourceInfo):
 
     @property
     def href(self):
-        url = "{}/workspaces/{}/wmsstores/{}/wmslayers/{}.xml".format(
-            self.catalog.service_url,
-            self.workspace.name,
-            self.store.name,
-            self.name
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "workspaces/{}/wmsstores/{}/wmslayers/{}.xml".format(
+                self.workspace.name,
+                self.store.name,
+                self.name
+            )
         )
-        return url
 
     title = xml_property("title")
     description = xml_property("description")
     abstract = xml_property("abstract")
     keywords = xml_property("keywords", string_list)
+    # nativeCRS
     projection = xml_property("srs")
     native_bbox = xml_property("nativeBoundingBox", bbox)
     latlon_bbox = xml_property("latLonBoundingBox", bbox)
     projection_policy = xml_property("projectionPolicy")
     enabled = xml_property("enabled", lambda x: x.text == "true")
-    advertised = xml_property("advertised", lambda x: x.text == "true", default=True)
+    advertised = xml_property("advertised", lambda x: x.text == "true",
+                              default=True)
     metadata_links = xml_property("metadataLinks", metadata_link_list)
 
-    writers = dict(
-        title = write_string("title"),
-        description = write_string("description"),
-        abstract = write_string("abstract"),
-        keywords = write_string_list("keywords"),
+    writers = {
+        'title': write_string("title"),
+        'description': write_string("description"),
+        'abstract': write_string("abstract"),
+        'keywords': write_string_list("keywords"),
         # nativeCRS
-        srs = write_string("srs"),
-        nativeBoundingBox = write_bbox("nativeBoundingBox"),
-        latLonBoundingBox = write_bbox("latLonBoundingBox"),
-        projectionPolicy = write_string("projectionPolicy"),
-        enabled = write_bool("enabled"),
-        advertised = write_bool("advertised"),
-        metadataLinks = write_metadata_link_list("metadataLinks")
-    )
+        'srs': write_string("srs"),
+        'nativeBoundingBox': write_bbox("nativeBoundingBox"),
+        'latLonBoundingBox': write_bbox("latLonBoundingBox"),
+        'projectionPolicy': write_string("projectionPolicy"),
+        'enabled': write_bool("enabled"),
+        'advertised': write_bool("advertised"),
+        'metadataLinks': write_metadata_link_list("metadataLinks")
+    }

@@ -1,10 +1,19 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
+try:
+    from urllib.parse import urljoin
+except:
+    from urlparse import urljoin
 
-The project is distributed under a MIT License .
-'''
-
-from geoserver.support import xml_property, write_bool, ResourceInfo, build_url
+from geoserver.support import ResourceInfo, xml_property, write_bool
 
 
 def workspace_from_index(catalog, node):
@@ -13,29 +22,53 @@ def workspace_from_index(catalog, node):
 
 
 class Workspace(ResourceInfo):
-
     resource_type = "workspace"
 
     def __init__(self, catalog, name):
         super(Workspace, self).__init__()
-        self.catalog = catalog
-        self.name = name
+        self._catalog = catalog
+        self._name = name
+
+    @property
+    def catalog(self):
+        return self._catalog
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def href(self):
-        return build_url(self.catalog.service_url, ["workspaces", self.name + ".xml"])
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "workspaces/{}.xml".format(self.name)
+        )
 
     @property
     def coveragestore_url(self):
-        return build_url(self.catalog.service_url, ["workspaces", self.name, "coveragestores.xml"])
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "workspaces/{}/coveragestores.xml".format(self.name)
+        )
 
     @property
     def datastore_url(self):
-        return build_url(self.catalog.service_url, ["workspaces", self.name, "datastores.xml"])
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "workspaces/{}/datastores.xml".format(self.name)
+        )
 
     @property
     def wmsstore_url(self):
-        return "%s/workspaces/%s/wmsstores.xml" % (self.catalog.service_url, self.name)
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "workspaces/{}/wmsstores.xml".format(self.name)
+        )
+
+    enabled = xml_property("enabled", lambda x: x.lower() == 'true')
+    writers = {
+        'enabled': write_bool("enabled")
+    }
 
     def __repr__(self):
-        return "%s @ %s" % (self.name, self.href)
+        return "{} @ {}".format(self.name, self.href)

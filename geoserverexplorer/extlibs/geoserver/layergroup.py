@@ -1,8 +1,17 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
+try:
+    from urllib.parse import urljoin
+except:
+    from urlparse import urljoin
 
 from geoserver.support import ResourceInfo, bbox, write_bbox, write_string, xml_property, build_url
 
@@ -72,32 +81,37 @@ class LayerGroup(ResourceInfo):
 
         # the XML format changed in 2.3.x - the element listing all the layers
         # and the entries themselves have changed
-        if self.catalog.gsversion() == "2.2.x":
+        if self.catalog.get_version() == "2.2.x":
             parent, element, attributes = "layers", "layer", None
         else:
-            parent, element, attributes = "publishables", "published", {'type': 'layer'}
-
+            parent = "publishables"
+            element = "published"
+            attributes = {'type': 'layer'}
         self._layer_parent = parent
         self._layer_element = element
         self._layer_attributes = attributes
-        self.writers = dict(
-            name = write_string("name"),
-            styles = _write_styles,
-            layers = lambda b, l: _write_layers(b, l, parent, element, attributes),
-            bounds = write_bbox("bounds"),
-            workspace = write_string("workspace"),
-            mode = write_string("mode"),
-            abstractTxt = write_string("abstractTxt"),
-            title = write_string("title")
-        )
+        self.writers = {
+            'name': write_string("name"),
+            'styles': _write_styles,
+            'layers': lambda b, l: _write_layers(b, l, parent,
+                                                 element, attributes),
+            'bounds': write_bbox("bounds"),
+            'workspace': write_string("workspace"),
+            'mode': write_string("mode"),
+            'abstractTxt': write_string("abstractTxt"),
+            'title': write_string("title")
+        }
 
     @property
     def href(self):
-        uri = "layergroups/{}.xml".format(self.name)
+        path_parts = "layergroups/{}.xml".format(self.name)
         if self.workspace is not None:
             workspace_name = getattr(self.workspace, 'name', self.workspace)
-            uri = "workspaces/{}/{}".format(workspace_name, uri)
-        return "{}/{}".format(self.catalog.service_url, uri)
+            path_parts = "workspaces/{}/{}".format(workspace_name, path_parts)
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            path_parts
+        )
 
     styles = xml_property("styles", _style_list)
     bounds = xml_property("bounds", bbox)
@@ -112,7 +126,9 @@ class LayerGroup(ResourceInfo):
             if self.dom is None:
                 self.fetch()
             node = self.dom.find(self._layer_parent)
-            return _layer_list(node, self._layer_element) if node is not None else None
+            if node is not None:
+                return _layer_list(node, self._layer_element)
+            return None
 
     def _layers_setter(self, value):
         self.dirty["layers"] = value
@@ -123,7 +139,7 @@ class LayerGroup(ResourceInfo):
     layers = property(_layers_getter, _layers_setter, _layers_delete)
 
     def __str__(self):
-        return "<LayerGroup %s>" % self.name
+        return "<LayerGroup {}>".format(self.name)
 
     __repr__ = __str__
 

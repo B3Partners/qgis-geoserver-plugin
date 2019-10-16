@@ -1,9 +1,13 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
-
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
 import geoserver.workspace as ws
 from geoserver.resource import featuretype_from_index, coverage_from_index, wmslayer_from_index
 from geoserver.support import ResourceInfo, xml_property, key_value_pairs, write_bool, write_dict, write_string, build_url

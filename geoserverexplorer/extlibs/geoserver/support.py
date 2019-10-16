@@ -1,9 +1,13 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
-
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
 import logging
 from xml.etree.ElementTree import TreeBuilder, tostring
 from tempfile import mkstemp
@@ -62,18 +66,24 @@ def build_url(base, seg, query=None):
         query_string = "?" + urlencode(query)
     path = '/'.join(seg) + query_string
     adjusted_base = base.rstrip('/') + '/'
-    return urljoin(adjusted_base, path)
+    return urljoin(str(adjusted_base), str(path))
 
 
-def xml_property(path, converter = lambda x: x.text, default=None):
+def xml_property(path, converter=lambda x: x.text, default=None):
     def getter(self):
-        if path in self.dirty:
-            return self.dirty[path]
-        else:
-            if self.dom is None:
-                self.fetch()
-            node = self.dom.find(path)
-            return converter(self.dom.find(path)) if node is not None else default
+        try:
+            if path in self.dirty:
+                return self.dirty[path]
+            else:
+                if self.dom is None:
+                    self.fetch()
+                node = self.dom.find(path)
+                if node is not None:
+                    return converter(self.dom.find(path))
+                return default
+        except Exception as e:
+            raise AttributeError(e)
+
 
     def setter(self, value):
         self.dirty[path] = value
@@ -119,7 +129,7 @@ def key_value_pairs(node):
 def write_string(name):
     def write(builder, value):
         builder.start(name, dict())
-        if (value is not None):
+        if value is not None:
             builder.data(value)
         builder.end(name)
     return write
@@ -250,8 +260,8 @@ def atom_link(node):
     if 'href' in node.attrib:
         return node.attrib['href']
     else:
-        l = node.find("{http://www.w3.org/2005/Atom}link")
-        return l.get('href')
+        link = node.find("{http://www.w3.org/2005/Atom}link")
+        return link.get('href')
 
 
 def atom_link_xml(builder, href):
@@ -267,16 +277,16 @@ def atom_link_xml(builder, href):
 def bbox_xml(builder, box):
     minx, maxx, miny, maxy, crs = box
     builder.start("minx", dict())
-    builder.data(minx)
+    builder.data(str(minx))
     builder.end("minx")
     builder.start("maxx", dict())
-    builder.data(maxx)
+    builder.data(str(maxx))
     builder.end("maxx")
     builder.start("miny", dict())
-    builder.data(miny)
+    builder.data(str(miny))
     builder.end("miny")
     builder.start("maxy", dict())
-    builder.data(maxy)
+    builder.data(str(maxy))
     builder.end("maxy")
     if crs is not None:
         builder.start("crs", {"class": "projected"})
@@ -328,6 +338,10 @@ def dimension_info(builder, metadata):
                 builder.data(metadata.referenceValue)
                 builder.end("referenceValue")
             builder.end("defaultValue")
+        if metadata.nearestMatchEnabled is not None:
+            builder.start("nearestMatchEnabled", dict())
+            builder.data(metadata.nearestMatchEnabled)
+            builder.end("nearestMatchEnabled")
 
         builder.end("dimensionInfo")
 
@@ -345,7 +359,7 @@ class DimensionInfo(object):
     )
 
     def __init__(self, name, enabled, presentation, resolution, units, unitSymbol,
-                 strategy=None, attribute=None, end_attribute=None, reference_value=None):
+                 strategy=None, attribute=None, end_attribute=None, reference_value=None, nearestMatchEnabled=None):
         self.name = name
         self.enabled = enabled
         self.attribute = attribute
@@ -356,6 +370,7 @@ class DimensionInfo(object):
         self.unitSymbol = unitSymbol
         self.strategy = strategy
         self.referenceValue = reference_value
+        self.nearestMatchEnabled = nearestMatchEnabled
 
     def _multipier(self, name):
         name = name.lower()
@@ -389,23 +404,25 @@ class DimensionInfo(object):
 
 def md_dimension_info(name, node):
     """Extract metadata Dimension Info from an xml node"""
-    child_text = lambda child_name: getattr(node.find(child_name), 'text', None)
-    resolution = child_text('resolution')
+    def _get_value(child_name):
+        return getattr(node.find(child_name), 'text', None)
+
+    resolution = _get_value('resolution')
     defaultValue = node.find("defaultValue")
     strategy = defaultValue.find("strategy") if defaultValue is not None else None
     strategy = strategy.text if strategy is not None else None
     return DimensionInfo(
         name,
-        child_text('enabled') == 'true',
-        child_text('presentation'),
+        _get_value('enabled') == 'true',
+        _get_value('presentation'),
         int(resolution) if resolution else None,
-        child_text('units'),
-        child_text('unitSymbol'),
-        # child_text('strategy'),
+        _get_value('units'),
+        _get_value('unitSymbol'),
         strategy,
-        child_text('attribute'),
-        child_text('endAttribute'),
-        child_text('referenceValue'),
+        _get_value('attribute'),
+        _get_value('endAttribute'),
+        _get_value('referenceValue'),
+        _get_value('nearestMatchEnabled')
     )
 
 
@@ -633,5 +650,15 @@ def workspace_from_url(url):
     split_path = parts.path.split('/')
     if 'workspaces' in split_path:
         return split_path[split_path.index('workspaces') + 1]
+    else:
+        return None
+
+
+def resource_from_url(url, workspace):
+    parts = urlparse(url)
+    split_path = parts.path.split('/')
+    if workspace in split_path:
+        resource_type = split_path[split_path.index(workspace) + 1]
+        return split_path[split_path.index(resource_type) + 1]
     else:
         return None

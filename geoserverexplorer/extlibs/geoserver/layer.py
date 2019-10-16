@@ -1,10 +1,24 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
+try:
+    from urllib.parse import urljoin
+except:
+    from urlparse import urljoin
 
-The project is distributed under a MIT License .
-'''
-
-from geoserver.support import ResourceInfo, xml_property, write_bool, workspace_from_url
+from geoserver.support import (
+    ResourceInfo,
+    xml_property,
+    write_bool,
+    workspace_from_url,
+    resource_from_url)
 from geoserver.style import Style
 
 
@@ -103,13 +117,17 @@ class Layer(ResourceInfo):
         super(Layer, self).__init__()
         self.catalog = catalog
         self.name = name
+        self.gs_version = self.catalog.get_short_version()
 
     resource_type = "layer"
     save_method = "PUT"
 
     @property
     def href(self):
-        return "{}/layers/{}.xml".format(self.catalog.service_url, self.name)
+        return urljoin(
+            "{}/".format(self.catalog.service_url),
+            "layers/{}.xml".format(self.name)
+        )
 
     @property
     def resource(self):
@@ -118,7 +136,12 @@ class Layer(ResourceInfo):
         name = self.dom.find("resource/name").text
         atom_link = [n for n in self.dom.find("resource").getchildren() if 'href' in n.attrib]
         ws_name = workspace_from_url(atom_link[0].get('href'))
-        return self.catalog.get_resources(names=name.split(":")[-1], workspaces=ws_name)[0]
+        if self.gs_version >= "2.13":
+            if ":" in name:
+                ws_name, name = name.split(':')
+        store_name = resource_from_url(atom_link[0].get('href'), ws_name)
+        _resources = self.catalog.get_resources(names=[name], stores=[store_name], workspaces=[ws_name])
+        return _resources[0] if len(_resources) > 0 else _resources
 
     def _get_default_style(self):
         if 'default_style' in self.dirty:
@@ -194,10 +217,10 @@ class Layer(ResourceInfo):
 
     attribution = property(_get_attr_attribution, _set_attr_attribution)
 
-    writers = dict(
-        attribution = _write_attribution,
-        enabled = write_bool("enabled"),
-        advertised = write_bool("advertised"),
-        default_style = _write_default_style,
-        alternate_styles = _write_alternate_styles
-    )
+    writers = {
+        'attribution': _write_attribution,
+        'enabled': write_bool("enabled"),
+        'advertised': write_bool("advertised"),
+        'default_style': _write_default_style,
+        'alternate_styles': _write_alternate_styles
+    }

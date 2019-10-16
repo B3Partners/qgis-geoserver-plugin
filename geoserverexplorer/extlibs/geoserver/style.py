@@ -1,9 +1,13 @@
-'''
-gsconfig is a python library for manipulating a GeoServer instance via the GeoServer RESTConfig API.
-
-The project is distributed under a MIT License .
-'''
-
+# -*- coding: utf-8 -*-
+#########################################################################
+#
+# Copyright 2019, GeoSolutions Sas.
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE.txt file in the root directory of this source tree.
+#
+#########################################################################
 from geoserver.support import ResourceInfo, build_url, xml_property
 try:
     from past.builtins import basestring
@@ -32,7 +36,9 @@ class Style(ResourceInfo):
 
     @property
     def fqn(self):
-        return self.name if not self.workspace else '%s:%s' % (self.workspace, self.name)
+        if not self.workspace:
+            return self.name
+        return '{}:{}'.format(self.workspace, self.name)
 
     @property
     def href(self):
@@ -74,11 +80,12 @@ class Style(ResourceInfo):
         if not user_style:
             user_style = self._get_sld_dom().find("{http://www.opengis.net/sld}UserLayer/{http://www.opengis.net/sld}UserStyle")
 
+        title_node = None
         if user_style:
             try:
                 # it is not mandatory
                 title_node = user_style.find("{http://www.opengis.net/sld}Title")
-            except:
+            except AttributeError:
                 title_node = None
 
         return title_node.text if title_node is not None else None
@@ -89,11 +96,12 @@ class Style(ResourceInfo):
         if not user_style:
             user_style = self._get_sld_dom().find("{http://www.opengis.net/sld}UserLayer/{http://www.opengis.net/sld}UserStyle")
 
+        name_node = None
         if user_style:
             try:
                 # it is not mandatory
                 name_node = user_style.find("{http://www.opengis.net/sld}Name")
-            except:
+            except AttributeError:
                 name_node = None
 
         return name_node.text if name_node is not None else None
@@ -105,5 +113,5 @@ class Style(ResourceInfo):
 
     def update_body(self, body):
         headers = {"Content-Type": self.content_type}
-        self.catalog.http_request(
-            self.body_href, body, "PUT", headers)
+        self.catalog.http.request(
+            self.body_href, "PUT", body, headers)
