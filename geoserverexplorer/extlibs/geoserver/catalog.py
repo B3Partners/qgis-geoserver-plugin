@@ -1112,7 +1112,7 @@ class Catalog(object):
         if style:
             headers = {
                 "Content-type": style.content_type,
-                "Accept": "application/xml"
+                "Accept": "text/plain"
             }
 
             body_href = style.body_href
@@ -1120,6 +1120,10 @@ class Catalog(object):
                 body_href += "?raw=true"
 
             resp = self.http_request(body_href, method='put', data=data, headers=headers)
+            if resp.status_code == 406:
+                headers["Accept"] = "application/xml"
+                resp = self.http_request(body_href, method='put', data=data, headers=headers)
+            
             if resp.status_code not in (200, 201, 202):
                 raise FailedRequestError('Failed to create style {} : {}, {}'.format(name, resp.status_code, resp.text))
 
