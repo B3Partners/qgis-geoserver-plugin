@@ -9,7 +9,7 @@ Installation
 ------------
 
 Only an old version of this plugin is available through QGIS official plugin repository. 
-Create a zip from the geoserverexplorer directory and install it as aplugin from zip in QGIS.
+Create a zip from the geoserverexplorer directory and install it as a plugin from zip in QGIS.
 
 Manual
 ------
