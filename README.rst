@@ -14,4 +14,4 @@ Create a zip from the geoserverexplorer directory and install it as aplugin from
 Manual
 ------
 
-See [wiki](https://github.com/B3Partners/qgis-geoserver-plugin/wiki)
+See https://github.com/B3Partners/qgis-geoserver-plugin/wiki
