@@ -4,17 +4,17 @@ description=Configure and manage GeoServer from QGIS
 about=Easily configure GeoServer through QGIS. Prepare data and styling or publish directly to a catalog directly from the QGIS interface, or add a service from GeoServer into your QGIS project.
 category=Web
 qgisMinimumVersion=3.0
-version=1.0
+version=1.0a
 
-author=Boundless (Victor Olaya)
-email=info@boundlessgeo.com
+author=Boundless (Victor Olaya), adapted by B3Partners BV
+email=info@b3partners.nl
 
-icon=images/desktop.svg
-tags=boundless,geoserver
+icon=images/b3p_logo.png
+tags=b3partners,boundless,geoserver
 
-homepage=https://github.com/boundlessgeo/qgis-geoserver-plugin
-tracker=https://github.com/boundlessgeo/qgis-geoserver-plugin/issues
-repository=https://github.com/boundlessgeo/qgis-geoserver-plugin
+homepage=https://github.com/B3Partners/qgis-geoserver-plugin
+tracker=https://github.com/B3Partners/qgis-geoserver-plugin/issues
+repository=https://github.com/B3Partners/qgis-geoserver-plugin
 
 experimental=False
 deprecated=False
